@@ -1,0 +1,24 @@
+# build output
+build*/
+out/
+dist/
+.vs/
+*.user
+CMakeUserPresets.json
+
+# private: share links, sample videos
+_link/
+demoFiles/
+
+# never commit run-time data (settings with encrypted links, databases, logs, videos)
+*.ini
+*.sqlite
+*.sqlite-*
+*.db
+*.lock
+*.log
+*.mp4
+*.mov
+*.m4v
+*.mkv
+*.part

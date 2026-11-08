@@ -5,6 +5,7 @@
 #include <QHash>
 #include <QObject>
 #include <QStringList>
+#include <QTimer>
 
 class QNetworkAccessManager;
 class QNetworkReply;
@@ -49,12 +50,15 @@ private:
     void onZipFinished();
     void onUnpacked(int exitCode);
     void install();
+    void swapIn();
     void fail(const QString &error);
     void cleanup();
 
     QNetworkAccessManager *m_network = nullptr;
     QNetworkReply *m_reply = nullptr;
     QProcess *m_tar = nullptr;
+    QTimer m_swapRetry;
+    int m_swapAttempts = 0;
     QFile m_zip;
     QCryptographicHash m_hash{QCryptographicHash::Sha256};
     QString m_asset;

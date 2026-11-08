@@ -770,7 +770,7 @@ An: die Umwandlung wird hochgeladen, das Original auf HiDrive gelöscht und loka
         <translation>Entpacke…</translation>
     </message>
     <message>
-        <source>Windows' tar.exe is missing (Windows 10 version 1803 or newer is needed).</source>
+        <source>Windows&apos; tar.exe is missing (Windows 10 version 1803 or newer is needed).</source>
         <translation>tar.exe von Windows fehlt (Windows 10 Version 1803 oder neuer wird benötigt).</translation>
     </message>
     <message>
@@ -786,12 +786,16 @@ An: die Umwandlung wird hochgeladen, das Original auf HiDrive gelöscht und loka
         <translation>In %1 kann nicht geschrieben werden.</translation>
     </message>
     <message>
+        <source>Installing…</source>
+        <translation>Wird installiert…</translation>
+    </message>
+    <message>
         <source>The current ffmpeg in %1 is in use. Try again when no video is being converted.</source>
         <translation>Das bisherige ffmpeg in %1 wird gerade benutzt. Bitte erneut versuchen, wenn kein Video umgewandelt wird.</translation>
     </message>
     <message>
-        <source>Cannot install ffmpeg into %1.</source>
-        <translation>ffmpeg kann nicht in %1 installiert werden.</translation>
+        <source>Cannot install ffmpeg into %1: %2</source>
+        <translation>ffmpeg kann nicht in %1 installiert werden: %2</translation>
     </message>
     <message>
         <source>ffmpeg installed in %1.</source>
@@ -1157,6 +1161,10 @@ An: die Umwandlung wird hochgeladen, das Original auf HiDrive gelöscht und loka
     <message>
         <source>Backup of %1 expired and was deleted.</source>
         <translation>Die Sicherung von %1 ist abgelaufen und wurde gelöscht.</translation>
+    </message>
+    <message>
+        <source>Backup %1 expired and was deleted.</source>
+        <translation>Die Sicherung %1 ist abgelaufen und wurde gelöscht.</translation>
     </message>
     <message>
         <source>Paused.</source>

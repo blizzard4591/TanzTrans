@@ -82,9 +82,12 @@ while running puts the file back without counting a failure.
 **One-click download** (`FfmpegInstaller`): BtbN's GitHub builds, branch-pinned
 `ffmpeg-n9.0-latest-win64-gpl-shared-9.0.zip` (falls back to the newest `n<x.y>` GPL shared release
 build, never master). Steps: `checksums.sha256` → zip (SHA-256 checked) → unpacked with Windows'
-`tar.exe` → `bin\` (without ffplay) plus `LICENSE.txt` and a `SOURCE.txt` into
-`%LOCALAPPDATA%\TanzTrans\ffmpeg`. No administrator rights; the old copy is replaced only if it is not in
-use. ffmpeg is downloaded on demand, not shipped, so TanzTrans does not redistribute GPL binaries.
+`tar.exe` → `bin\` (without ffplay) plus `LICENSE.txt` and a `SOURCE.txt` into `ffmpeg.new` → folder
+renamed to `%LOCALAPPDATA%\TanzTrans\ffmpeg` (the old copy becomes `ffmpeg.old` and is deleted). Windows
+refuses to rename a folder while a file in it is open (a virus scanner checking the new files, a running
+conversion using the old ones), so the swap is retried for 30 s; errors give the Windows reason. No
+administrator rights. ffmpeg is downloaded on demand, not shipped, so TanzTrans does not redistribute GPL
+binaries.
 
 ## 5. When a file is transcoded
 
@@ -238,8 +241,9 @@ Main window with tray icon (closing hides it), optional start with Windows (`HKC
 - With the current replace order: same-name replacement through `.tanztrans-orig`, the `_tt` fallback
   when `<stem>.mp4` exists, no leftovers on HiDrive; killing TanzTrans mid-encode also ends ffmpeg (job
   object), and the restart deletes the partial output and encodes again without a new download.
+- One-click download end to end (startup dialog → download → install → re-check finds ffmpeg n9.0 as
+  "downloaded by TanzTrans").
 
 **OPEN**
 - Dolby Vision with a real iPhone HDR clip: check that the result plays as HDR (HLG) on an iPhone.
 - Playback check of the test outputs on an iPhone, an Android phone and a 4K TV.
-- The one-click download is unit-tested (checksums, build choice) but not yet run end to end.

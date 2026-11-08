@@ -125,6 +125,19 @@ bool killWithThisProcess(qint64 pid)
 #endif
 }
 
+QString renameDirectory(const QString &from, const QString &to)
+{
+#ifdef Q_OS_WIN
+    const QString source = QDir::toNativeSeparators(from);
+    const QString target = QDir::toNativeSeparators(to);
+    if (MoveFileExW(reinterpret_cast<LPCWSTR>(source.utf16()), reinterpret_cast<LPCWSTR>(target.utf16()), 0))
+        return {};
+    return qt_error_string(int(GetLastError())).trimmed();
+#else
+    return QDir().rename(from, to) ? QString() : QStringLiteral("rename failed");
+#endif
+}
+
 void setAutostart(bool enabled, const QString &exePath, const QStringList &arguments)
 {
 #ifdef Q_OS_WIN

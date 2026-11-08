@@ -19,6 +19,10 @@ bool resumeProcess(qint64 pid);
 /// so no orphaned (or forever suspended) ffmpeg keeps running and locking files.
 bool killWithThisProcess(qint64 pid);
 
+/// Renames a folder (same drive). Returns the system's reason if that fails, empty on success.
+/// Windows refuses while any file inside is open, e.g. by a virus scanner.
+QString renameDirectory(const QString &from, const QString &to);
+
 /// Start with Windows via HKCU\...\Run.
 void setAutostart(bool enabled, const QString &exePath, const QStringList &arguments);
 

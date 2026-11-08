@@ -2,6 +2,7 @@
 
 #include "Log.h"
 #include "Tools.h"
+#include "WinUtil.h"
 
 #include <QDir>
 #include <QDirIterator>
@@ -19,6 +20,8 @@ namespace tt {
 namespace {
 
 constexpr qint64 kRequiredSpace = 700LL * 1024 * 1024; // zip + unpacked + installed copy
+constexpr int kSwapAttempts = 60;                       // folder swap: retried for up to 30 s
+constexpr int kSwapRetryMs = 500;
 
 QString native(const QString &path)
 {
@@ -72,6 +75,8 @@ FfmpegInstaller::FfmpegInstaller(QObject *parent)
     : QObject(parent)
     , m_network(new QNetworkAccessManager(this))
 {
+    m_swapRetry.setSingleShot(true);
+    connect(&m_swapRetry, &QTimer::timeout, this, &FfmpegInstaller::swapIn);
 }
 
 FfmpegInstaller::~FfmpegInstaller()
@@ -229,23 +234,50 @@ void FfmpegInstaller::install()
         }
     }
     QFile::rename(QFileInfo(bin).absolutePath() + QStringLiteral("/LICENSE.txt"), fresh + QStringLiteral("/LICENSE.txt"));
-    QFile source(fresh + QStringLiteral("/SOURCE.txt"));
-    if (source.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        source.write(QStringLiteral("Downloaded by TanzTrans from %1%2\nSHA-256: %3\n"
-                                    "Licence: GNU GPL v3, see LICENSE.txt. Source code: https://ffmpeg.org and "
-                                    "https://github.com/BtbN/FFmpeg-Builds\n")
-                         .arg(QString::fromLatin1(kFfmpegReleaseUrl), m_asset, m_expectedHash)
-                         .toUtf8());
-    }
+    {
+        QFile source(fresh + QStringLiteral("/SOURCE.txt"));
+        if (source.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            source.write(QStringLiteral("Downloaded by TanzTrans from %1%2\nSHA-256: %3\n"
+                                        "Licence: GNU GPL v3, see LICENSE.txt. Source code: https://ffmpeg.org and "
+                                        "https://github.com/BtbN/FFmpeg-Builds\n")
+                             .arg(QString::fromLatin1(kFfmpegReleaseUrl), m_asset, m_expectedHash)
+                             .toUtf8());
+        }
+    } // closed here: an open file blocks renaming its folder
 
-    if (QFileInfo::exists(target) && !QDir().rename(target, old)) {
-        QDir(fresh).removeRecursively();
-        fail(tr("The current ffmpeg in %1 is in use. Try again when no video is being converted.").arg(native(target)));
+    emit stageChanged(tr("Installing…"));
+    m_swapAttempts = 0;
+    swapIn();
+}
+
+/// Puts ffmpeg.new in place of ffmpeg. Windows cannot rename a folder while a file in it is
+/// open (a virus scanner checking the new files, a conversion using the old ones), so this is
+/// retried for a while before giving up.
+void FfmpegInstaller::swapIn()
+{
+    if (!m_running)
         return;
+    const QString target = managedToolsDir();
+    const QString fresh = target + QStringLiteral(".new");
+    const QString old = target + QStringLiteral(".old");
+    const bool retry = ++m_swapAttempts < kSwapAttempts;
+    const bool replacing = QFileInfo::exists(target);
+    if (replacing) {
+        if (const QString error = win::renameDirectory(target, old); !error.isEmpty()) {
+            if (retry)
+                m_swapRetry.start(kSwapRetryMs);
+            else
+                fail(tr("The current ffmpeg in %1 is in use. Try again when no video is being converted.").arg(native(target)));
+            return;
+        }
     }
-    if (!QDir().rename(fresh, target)) {
-        QDir().rename(old, target);
-        fail(tr("Cannot install ffmpeg into %1.").arg(native(target)));
+    if (const QString error = win::renameDirectory(fresh, target); !error.isEmpty()) {
+        if (replacing)
+            win::renameDirectory(old, target);
+        if (retry)
+            m_swapRetry.start(kSwapRetryMs);
+        else
+            fail(tr("Cannot install ffmpeg into %1: %2").arg(native(target), error));
         return;
     }
     QDir(old).removeRecursively();
@@ -278,10 +310,12 @@ void FfmpegInstaller::cleanup()
         tar->waitForFinished(3000);
         tar->deleteLater();
     }
+    m_swapRetry.stop();
     if (m_zip.isOpen())
         m_zip.close();
     if (!m_workDir.isEmpty())
         QDir(m_workDir).removeRecursively();
+    QDir(managedToolsDir() + QStringLiteral(".new")).removeRecursively(); // left over if the swap failed
 }
 
 } // namespace tt
